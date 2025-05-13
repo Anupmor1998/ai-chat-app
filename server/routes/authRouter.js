@@ -1,9 +1,11 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const util = require("util");
 const userModal = require("../models/userModal");
 const router = express.Router();
 
+const saltRounds = 10;
 const asyncSign = util.promisify(jwt.sign);
 
 router.post("/signup", async (req, res) => {
@@ -13,20 +15,20 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ message: "All fields are required!" });
   }
 
-  const isUserPresent = await userModal.findOne({ email });
-  if (isUserPresent) {
-    return res.status(400).json({
-      message: "User already exists!",
-    });
-  }
-  const user = new userModal({
-    name,
-    email,
-    password,
-  });
-
   try {
-    await user.save();
+    const isUserPresent = await userModal.findOne({ email });
+    if (isUserPresent) {
+      return res.status(400).json({
+        message: "User already exists!",
+      });
+    }
+
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+    const user = new userModal({
+      name,
+      email,
+      password: hashPassword,
+    });
     const token = await asyncSign(
       {
         user_id: user?._id,
@@ -36,10 +38,51 @@ router.post("/signup", async (req, res) => {
         expiresIn: "1d",
       },
     );
+    await user.save();
+    res.status(201).json({ success: true, token });
+  } catch (error) {
+    return res.status(400).json({
+      message: error?.message || error,
+    });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "email and password is required!" });
+  }
+
+  try {
+    const isUserExists = await userModal.findOne({ email });
+
+    if (!isUserExists) {
+      return res.status(400).json({
+        message: "user not found!",
+      });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(
+      password,
+      isUserExists?.password,
+    );
+
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: "Invalid password!" });
+    }
+    const token = await asyncSign(
+      {
+        user_id: isUserExists?._id,
+      },
+      process.env.SECRET,
+      {
+        expiresIn: "1d",
+      },
+    );
     res.status(201).json({
-      user,
+      success: true,
       token,
-      message: "User signed up successfully",
     });
   } catch (error) {
     return res.status(400).json({
