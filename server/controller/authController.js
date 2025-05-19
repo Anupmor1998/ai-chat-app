@@ -91,15 +91,20 @@ exports.login = async (req, res) => {
 };
 
 exports.protect = async (req, res, next) => {
-  let token = null;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
   try {
+    let token = null;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+      return res.status(400).json({
+        message: "authentication token is required!",
+      });
+    }
     const result = await asyncVerify(token, process.env.SECRET);
     req.userId = result.user_id;
     next();
