@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const util = require("util");
-const userModal = require("../models/userModal");
+const userModal = require("../models/userModel");
 
 const saltRounds = 10;
 const asyncSign = util.promisify(jwt.sign);
