@@ -5,18 +5,27 @@ const messageSchema = new Schema(
     content: String,
     status: {
       type: String,
-      enum: ["seen", "read"],
-      default: "seen",
+      enum: ["sent", "read"],
+      default: "sent",
     },
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    chat: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
     },
   },
   {
     timestamps: true,
     toJSON: {
       virtuals: true,
+      transform: function (doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+      },
     },
   },
 );

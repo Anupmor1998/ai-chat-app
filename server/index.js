@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 
 const authRouter = require("./routes/authRouter");
+const chatRouter = require("./routes/chatRouter");
 const connectDB = require("./utils/db");
 
 const app = express();
@@ -11,10 +12,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.PORT || 8000;
 
+app.use("/api/chat", chatRouter);
 app.use("/api/auth", authRouter);
 
 app.all("{*splat}", (req, res, next) => {
-  res.send(`the requested path: ${req.originalUrl} not found`);
+  res.status(404).send(`the requested path: ${req.originalUrl} not found`);
   next();
 });
 

@@ -38,9 +38,9 @@ exports.signup = async (req, res) => {
       },
     );
     await user.save();
-    res.status(201).json({ success: true, token });
+    res.status(201).json({ success: true, uuid: user.id, token });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(500).json({
       message: error?.message || error,
     });
   }
@@ -57,7 +57,7 @@ exports.login = async (req, res) => {
     const isUserExists = await userModal.findOne({ email });
 
     if (!isUserExists) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "user not found!",
       });
     }
@@ -81,10 +81,11 @@ exports.login = async (req, res) => {
     );
     res.status(201).json({
       success: true,
+      uuid: isUserExists.id,
       token,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(500).json({
       message: error?.message || error,
     });
   }
@@ -109,7 +110,7 @@ exports.protect = async (req, res, next) => {
     req.userId = result.user_id;
     next();
   } catch (error) {
-    return res.status(400).json({
+    return res.status(500).json({
       message: error?.message || error,
     });
   }
@@ -125,7 +126,7 @@ exports.userInfo = async (req, res) => {
       });
     }
     if (!user) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "user not found!",
       });
     }
@@ -133,7 +134,7 @@ exports.userInfo = async (req, res) => {
       data: user,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(500).json({
       message: error?.message || error,
     });
   }
