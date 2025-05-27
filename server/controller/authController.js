@@ -2,19 +2,22 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const util = require("util");
 const userModal = require("../models/userModel");
+const uploadImage = require("../utils/uploadImage");
 
 const saltRounds = 10;
 const asyncSign = util.promisify(jwt.sign);
 const asyncVerify = util.promisify(jwt.verify);
 
 exports.signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  console.log(req.body);
+  const { name, email, password, profileImage } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required!" });
   }
 
   try {
+    let userImage = null;
     const isUserPresent = await userModal.findOne({ email });
     if (isUserPresent) {
       return res.status(400).json({
@@ -23,10 +26,14 @@ exports.signup = async (req, res) => {
     }
 
     const hashPassword = await bcrypt.hash(password, saltRounds);
+    if (profileImage) {
+      userImage = await uploadImage(profileImage);
+    }
     const user = new userModal({
       name,
       email,
       password: hashPassword,
+      userImage,
     });
     const token = await asyncSign(
       {
