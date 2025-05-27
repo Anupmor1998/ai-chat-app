@@ -21,7 +21,7 @@ exports.createChat = async (req, res) => {
       participants: { $all: [participants[0], participants[1]], $size: 2 },
     });
 
-    if (existingChat) {
+    if (existingChat?.length) {
       return res.status(400).json({
         message: "chat already exists!",
       });
@@ -50,14 +50,39 @@ exports.getAllChats = async (req, res) => {
     const chats = await chatModel.find({
       participants: req.userId,
     });
-    if (!chats) {
-      return res.status(400).json({
+    if (chats?.length === 0) {
+      return res.status(404).json({
         message: "no chats found!",
       });
     }
     res.status(200).json({
       success: true,
       chats,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error?.message || error,
+    });
+  }
+};
+
+exports.deleteChat = async (req, res) => {
+  try {
+    const { chat_id } = req.body;
+    if (!chat_id) {
+      return res.status(400).json({
+        message: "chat_id is required!",
+      });
+    }
+
+    const chat = await chatModel.findByIdAndDelete(chat_id);
+    if (!chat) {
+      return res.status(404).json({
+        message: "no chat found!",
+      });
+    }
+    res.status(200).json({
+      success: true,
     });
   } catch (error) {
     return res.status(500).json({
