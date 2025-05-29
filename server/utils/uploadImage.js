@@ -1,6 +1,6 @@
 const cloudinary = require("cloudinary").v2;
 
-const uploadImage = async () => {
+const uploadImage = async (file) => {
   // Configuration
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_NAME,
@@ -10,12 +10,10 @@ const uploadImage = async () => {
 
   // Upload an image
   await cloudinary.uploader
-    .upload(
-      "https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg",
-      {
-        public_id: "profile_image",
-      },
-    )
+    .upload(file, {
+      folder: "user",
+      public_id: "profile_image",
+    })
     .catch((error) => {
       console.log(error);
     });

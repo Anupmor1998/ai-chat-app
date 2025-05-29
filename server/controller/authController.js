@@ -3,21 +3,23 @@ const bcrypt = require("bcrypt");
 const util = require("util");
 const userModal = require("../models/userModel");
 const uploadImage = require("../utils/uploadImage");
+const convertToBase64 = require("../utils/convertBase64");
 
 const saltRounds = 10;
 const asyncSign = util.promisify(jwt.sign);
 const asyncVerify = util.promisify(jwt.verify);
 
 exports.signup = async (req, res) => {
-  console.log(req.body);
-  const { name, email, password, profileImage } = req.body;
+  const { name, email, password } = req.body;
 
+  const file = req.file;
+
+  let userImage = null;
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required!" });
   }
 
   try {
-    let userImage = null;
     const isUserPresent = await userModal.findOne({ email });
     if (isUserPresent) {
       return res.status(400).json({
@@ -26,14 +28,15 @@ exports.signup = async (req, res) => {
     }
 
     const hashPassword = await bcrypt.hash(password, saltRounds);
-    if (profileImage) {
-      userImage = await uploadImage(profileImage);
+    if (file) {
+      const base64 = convertToBase64(file);
+      userImage = await uploadImage(base64);
     }
     const user = new userModal({
       name,
       email,
       password: hashPassword,
-      userImage,
+      ...(userImage && { profileImage: userImage }),
     });
     const token = await asyncSign(
       {

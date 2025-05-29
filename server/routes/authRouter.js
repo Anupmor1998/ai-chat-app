@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const {
   signup,
   login,
@@ -7,7 +8,10 @@ const {
 } = require("../controller/authController");
 const router = express.Router();
 
-router.post("/signup", signup);
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+router.post("/signup", upload.single("profileImage"), signup);
 router.post("/login", login);
 router.get("/me", protect, userInfo);
 
